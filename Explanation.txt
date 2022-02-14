@@ -1,0 +1,9 @@
+What were the challenges of the coursework and how did you deal with them?
+ - deciding what processing models and algorithms to use (decided to go with what was simplest first to get a working solution then planned to improve on it.
+  so that meant no processing model, and just processing the entire table at each step. essentially a direct 1-1 mapping of the relational algebra expressions.
+
+How did you decide tuning parameters like join order?
+ - It seemed intuitive to join the smaller table first and online references seemed to back up that intuition
+
+Performance of model
+ -
