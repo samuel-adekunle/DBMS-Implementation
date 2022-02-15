@@ -51,69 +51,69 @@ bool DBMSImplementationForMarks::lessThan(const AttributeValue &left, const Attr
 // Implements hash join algorithm
 // Smaller relation should be used as the buildSide
 const Relation *DBMSImplementationForMarks::hashJoin(const Relation *const probeSide, const Relation *const buildSide) {
-    if (probeSide == nullptr || buildSide == nullptr) { return nullptr; }
-    else {
-        const size_t hashTableSize = buildSide->size() * 2;
-        const long key = 3; // TODO - find better way
-        auto *hashTable = new Relation(hashTableSize);
-        auto *result = new Relation();
+    const Relation *hashJoin(const Relation *const probeSide, const Relation *const buildSide) {
+        if (probeSide == nullptr || buildSide == nullptr) { return nullptr; }
+        else {
+            const size_t hashTableSize = buildSide->size() * 2;
+            const long key = buildSide->size(); // TODO - find better way
+            auto *hashTable = new Relation(hashTableSize);
+            auto *result = new Relation();
 
-        auto hash = [&key](const AttributeValue &value) {
-            switch (getAttributeValueType(value)) {
-                case 0: {
-                    return getLongValue(value) % key;
+            auto hash = [&key](const AttributeValue &value) {
+                switch (getAttributeValueType(value)) {
+                    case 0: {
+                        return size_t(getLongValue(value)) % key;
+                    }
+                    case 1: {
+                        return size_t(getdoubleValue(value)) % key;
+                    }
+                    case 2: {
+                        // assuming no nullptr
+                        return size_t(std::hash<const char *>{}(getStringValue(value))) % key;
+                    }
                 }
-                case 1: {
-                    return long(getdoubleValue(value)) % key;
+            };
+
+            // linear probing
+            auto nextSlot = [&hashTableSize](const unsigned long slot) {
+                return (slot + 1) % hashTableSize;
+            };
+
+
+            // Build
+            for (const auto &buildTuple: *buildSide) {
+                const AttributeValue &buildValue = buildTuple.at(joinAttributeIndex);
+                if (buildValue.index() == 2 && getStringValue(buildValue) == nullptr) continue;
+                unsigned long hashValue = hash(buildValue);
+                while (!hashTable->at(hashValue).empty()) {
+                    hashValue = nextSlot(hashValue);
                 }
-                case 2: {
-                    // assuming no nullptr
-                    return long(std::hash<const char *>{}(getStringValue(value)) % key);
+                hashTable->at(hashValue) = buildTuple;
+            }
+
+            for (const auto &probeTuple: *probeSide) {
+                const AttributeValue &probeValue = probeTuple.at(joinAttributeIndex);
+                if (probeValue.index() == 2 && getStringValue(probeValue) == nullptr) continue;
+                unsigned long hashValue = hash(probeValue);
+
+                while (hashTable->at(hashValue).empty() ||
+                       hashTable->at(hashValue).at(joinAttributeIndex) != probeValue) {
+                    hashValue = nextSlot(hashValue);
+                }
+
+                const Tuple &buildTuple = hashTable->at(hashValue);
+
+                if (buildTuple.at(joinAttributeIndex) == probeValue) {
+                    Tuple combined;
+                    combined.reserve(buildTuple.size() + probeTuple.size());
+                    combined.insert(combined.begin(), probeTuple.begin(), probeTuple.end());
+                    combined.insert(combined.end(), buildTuple.begin(), buildTuple.end());
+                    result->push_back(combined);
                 }
             }
-            return long(0);
-        };
-
-        // linear probing
-        auto nextSlot = [&hashTableSize](const unsigned long slot) {
-            return (slot + 1) % hashTableSize;
-        };
-
-
-        // Build
-        for (const auto &buildTuple: *buildSide) {
-            const AttributeValue &buildValue = buildTuple.at(joinAttributeIndex);
-            if (buildValue.index() == 2 && getStringValue(buildValue) == nullptr) continue;
-            unsigned long hashValue = hash(buildValue);
-            while (!hashTable->at(hashValue).empty()) {
-                hashValue = nextSlot(hashValue);
-            }
-            hashTable->at(hashValue) = buildTuple;
-        }
-
-        for (const auto &probeTuple: *probeSide) {
-            const AttributeValue &probeValue = probeTuple.at(joinAttributeIndex);
-            if (probeValue.index() == 2 && getStringValue(probeValue) == nullptr) continue;
-            unsigned long hashValue = hash(probeValue);
-
-            while (!hashTable->at(hashValue).empty() &&
-                   hashTable->at(hashValue).at(joinAttributeIndex) != probeValue) {
-                hashValue = nextSlot(hashValue);
-            }
-
-            const Tuple &buildTuple = hashTable->at(hashValue);
-
-            if (buildTuple.at(joinAttributeIndex) == probeValue) {
-                Tuple combined;
-                combined.reserve(buildTuple.size() + probeTuple.size());
-                combined.insert(combined.begin(), probeTuple.begin(), probeTuple.end());
-                combined.insert(combined.end(), buildTuple.begin(), buildTuple.end());
-                result->push_back(combined);
-            }
+            return result;
         }
     }
-
-    return new Relation;
 }
 
 // TODO - add comments
