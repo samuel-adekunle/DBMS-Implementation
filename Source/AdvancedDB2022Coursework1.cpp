@@ -6,7 +6,51 @@
 // Smaller relation should be used as the buildSide
 const Relation *DBMSImplementationForMarks::hashJoin(const Relation *const probeSide, const Relation *const buildSide) {
     if (probeSide == nullptr || buildSide == nullptr) { return nullptr; }
-    // TODO - implement hash join algorithm
+    else {
+        const size_t hashTableSize = buildSide->size() * 2;
+        const long key = lround(buildSide->size() * 0.75); // TODO - change to next prime
+        auto *hashTable = new Relation(hashTableSize);
+        auto *result = new Relation();
+
+        auto hash = [&key](const AttributeValue &value) {
+            return getLongValue(value) % key; // TODO
+        };
+
+        auto nextSlot = [&hashTableSize](const unsigned long slot) {
+            return (slot + 1) % hashTableSize;
+        };
+
+
+        // Build
+        for (const auto &buildTuple: *buildSide) {
+            const AttributeValue &buildValue = buildTuple.at(joinAttributeIndex);
+            unsigned long hashValue = hash(buildValue);
+            while (!hashTable->at(hashValue).empty()) {
+                hashValue = nextSlot(hashValue);
+            }
+            hashTable->at(hashValue) = buildTuple;
+        }
+
+        for (const auto &probeTuple: *probeSide) {
+            const AttributeValue &probeValue = probeTuple.at(joinAttributeIndex);
+            unsigned long hashValue = hash(probeValue);
+
+            while (!hashTable->at(hashValue).empty() &&
+                   hashTable->at(hashValue).at(joinAttributeIndex) != probeValue) {
+                hashValue = nextSlot(hashValue);
+            }
+
+            const Tuple &buildTuple = hashTable->at(hashValue);
+
+            if (buildTuple.at(joinAttributeIndex) == probeValue) {
+                Tuple combined(buildTuple.size() + probeTuple.size());
+                combined.insert(combined.begin(), probeTuple.begin(), probeTuple.end());
+                combined.insert(combined.end(), buildTuple.begin(), buildTuple.end());
+                result->push_back(combined);
+            }
+        }
+    }
+
     return new Relation;
 }
 
