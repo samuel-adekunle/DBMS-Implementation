@@ -43,36 +43,42 @@ class DBMSImplementationForMarks {
 
     // **QUERY PARAMETERS**
 
-    const size_t sortAttributeIndex = 0; // a
-    const size_t joinAttributeIndex = 0; // a
-    const size_t selectAttributeIndex = 1; // b
-    const size_t sumAttributeIndex = 2; // c
+    static constexpr size_t sortAttributeIndex = 0;
+    static constexpr size_t joinAttributeIndex = 0;
+    static constexpr size_t selectAttributeIndex = 1;
+    static constexpr size_t sumAttributeIndex = 2;
 
     // **HELPER FUNCTIONS TO CHECK CONSTRAINTS ON WEAKLY TYPED ATTRIBUTE VALUES**
 
+    // General purpose comparison function for weakly typed attribute values
+    // Returns a pair where the second boolean value determines if the comparison was valid and safe
+    // The first value returns an int which is left - right for numerical types and strcmp for c-strings
+    static std::pair<int, bool> comp(const AttributeValue &left, const AttributeValue &right);
+
     // Checks equality constraint on two weakly typed attribute values
-    inline bool equals(const AttributeValue &left, const AttributeValue &right);
+    inline static bool equals(const AttributeValue &left, const AttributeValue &right);
 
     // Checks less than constraint on two weakly typed attribute values
-    inline bool lessThan(const AttributeValue &left, const AttributeValue &right);
+    inline static bool lessThan(const AttributeValue &left, const AttributeValue &right);
 
     // **MAIN QUERY FUNCTIONS**
 
     // Implements hash join algorithm
     // Smaller relation should be used as the buildSide
-    const Relation *hashJoin(const Relation *probeSide, const Relation *buildSide, size_t attributeIndex);
+    static const Relation *hashJoin(const Relation *probeSide, const Relation *buildSide);
 
     // Returns a sorted relation
-    const Relation *sortRelation(const Relation *relation, size_t attributeIndex);
+    static const Relation *sort(const Relation *relation);
 
     // Implements sort-merge join algorithm
-    const Relation *sortMergeJoin(const Relation *leftSide, const Relation *rightSide, size_t attributeIndex);
+    // Assumes both relations are sorted and contain unique values
+    static const Relation *sortMergeJoin(const Relation *leftSide, const Relation *rightSide);
 
     // Selects tuples where sum of selected attribute values is greater than the threshold
-    const Relation *select(const Relation *input, int threshold, size_t attributeIndex);
+    static const Relation *select(const Relation *input, int threshold);
 
     // Returns sum of product of the selected attribute values
-    long sumOfProduct(const Relation *input, size_t attributeIndex);
+    static long sumOfProduct(const Relation *input);
 
 public:
     void loadData(Relation const *l1,
@@ -80,17 +86,17 @@ public:
                   Relation const *s) {
 
         // save pointers to tables
-        large1 = sortRelation(l1, sortAttributeIndex);
+        large1 = DBMSImplementationForMarks::sort(l1);
         large2 = l2;
         small = s;
     }
 
     long runQuery(long threshold = 9) {
-        const Relation *buffer1 = hashJoin(large2, small, joinAttributeIndex);
-        const Relation *buffer2 = sortRelation(buffer1, sortAttributeIndex);
-        const Relation *buffer3 = sortMergeJoin(large1, buffer2, joinAttributeIndex);
-        const Relation *buffer4 = select(buffer2, threshold, selectAttributeIndex);
-        long result = sumOfProduct(buffer4, sumAttributeIndex);
+        const Relation *buffer1 = hashJoin(large2, small);
+        const Relation *buffer2 = DBMSImplementationForMarks::sort(buffer1);
+        const Relation *buffer3 = sortMergeJoin(large1, buffer2);
+        const Relation *buffer4 = select(buffer2, threshold);
+        long result = sumOfProduct(buffer4);
 
         // clean up buffers on heap
         delete buffer1;
