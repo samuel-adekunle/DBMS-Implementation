@@ -6,7 +6,34 @@
 // Smaller relation should be used as the buildSide
 const Relation *DBMSImplementationForMarks::hashJoin(const Relation *const probeSide, const Relation *const buildSide) {
     if (probeSide == nullptr || buildSide == nullptr) { return nullptr; }
-    // TODO - implement hash join algorithm
+    else {
+        
+        int nextslot(int);
+        const long hash =nextPrime(buildSide.size() * 0.75);
+        vector<optional<vector<int>>>hashTable;
+        for (size_t i=0; i< buildSide.size();i++){
+            auto buildInput =buildSide.at(i);
+            auto hashValue=buildInput.at(joinAttributeIndex)%hash;
+            while(hashTable[hashValue].hasValue)
+                    hashValue=nextSlot(hashValue);
+            hashTable[hashValue]=buildInput;
+
+        }
+        for (size_t i=0; i< probeSide.size();i++){
+            auto probeInput =probeSide.at(i);
+            auto hashValue=probeInput[joinAttributeIndex]%hash;
+            while(hashTable[hashValue].hasValue && hashTable.[hashValue].value[buildAttribute]!=probeInput.at(joinAttributeIndex))
+                    hashValue=nextSlot(hashValue);
+            if(hashTable[hashValue].value[joinAttributeIndex]==probeInput.at(joinAttributeIndex)
+            Tuple combined(hashTable.size()+ probeInput.size());
+            combined.insert(combined.begin(), hashTable.begin(), hashTable.end());
+            combined.insert(combined.end(), probeInput.begin(), probeInput.end());
+            Relation->push_back(combined);
+
+        }
+
+    }
+
     return new Relation;
 }
 
