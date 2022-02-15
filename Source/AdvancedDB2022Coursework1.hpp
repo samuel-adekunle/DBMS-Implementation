@@ -101,7 +101,7 @@ public:
 
     long runQuery(long threshold = 9) {
         const Relation *buffer1 = sortMergeJoin(large1, large2);
-        const Relation *buffer2 = sortMergeJoin(buffer1, small);
+        const Relation *buffer2 = hashJoin(buffer1, small);
         const Relation *buffer3 = select(buffer2, threshold);
         long result = sumOfProduct(buffer3);
 
