@@ -1,57 +1,5 @@
 #include "AdvancedDB2022Coursework1.hpp"
 
-// **HELPER FUNCTIONS TO CHECK CONSTRAINTS ON WEAKLY TYPED ATTRIBUTE VALUES**
-
-// General purpose comparison function for weakly typed attribute values
-// Returns a pair where the second boolean value determines if the comparison was valid and safe
-// The first value returns an int which is left - right for numerical types and strcmp for c-strings
-std::pair<int, bool> DBMSImplementationForMarks::comp(const AttributeValue &left, const AttributeValue &right) {
-    auto leftType = getAttributeValueType(left);
-    auto rightType = getAttributeValueType(right);
-    if (leftType != rightType) { return {0, false}; } // Values of different types don't compare
-    switch (leftType) {
-        case 0: // long
-        {
-            return {getLongValue(left) - getLongValue(right), true};
-        }
-        case 1: // double
-        {
-            // round doubles to the nearest integer (can't equal-compare floating point numbers)
-            long leftDoubleValue = lround(getdoubleValue(left));
-            long rightDoubleValue = lround(getdoubleValue(right));
-            return {leftDoubleValue - rightDoubleValue, true};
-        }
-        case 2: // char const *
-        {
-            auto leftStringValue = getStringValue(left);
-            auto rightStringValue = getStringValue(right);
-
-            // null values don't equal anything
-            if (leftStringValue == nullptr || rightStringValue == nullptr) { return {0, false}; }
-            else {
-                return {strcmp(leftStringValue, rightStringValue), true};
-            }
-        }
-        default: {
-            return {0, false};
-        }
-    }
-}
-
-// Checks equality constraint on two weakly typed attribute values
-// Returns a pair of bools where the first is the result of the comparison and the second is its validity
-std::pair<bool, bool> DBMSImplementationForMarks::equals(const AttributeValue &left, const AttributeValue &right) {
-    const std::pair<int, bool> comparison = comp(left, right);
-    return {comparison.first == 0, comparison.second};
-}
-
-// Checks less than constraint on two weakly typed attribute values
-// Returns a pair of bools where the first is the result of the comparison and the second is its validity
-std::pair<bool, bool> DBMSImplementationForMarks::lessThan(const AttributeValue &left, const AttributeValue &right) {
-    const std::pair<int, bool> comparison = comp(left, right);
-    return {comparison.first < 0, comparison.second};
-}
-
 // **MAIN QUERY FUNCTIONS**
 
 // Implements hash join algorithm
@@ -81,9 +29,8 @@ const Relation *DBMSImplementationForMarks::sortMergeJoin(const Relation *const 
         const AttributeValue &leftValue = leftTuple.at(joinAttributeIndex);
         const AttributeValue &rightValue = rightTuple.at(joinAttributeIndex);
 
-        // TODO - confirm logic here works
-        if (lessThan(leftValue, rightValue).first) { leftIndex++; }
-        else if (lessThan(rightValue, leftValue).first) { rightIndex++; }
+        if (leftValue < rightValue) { leftIndex++; }
+        else if (rightValue < leftValue) { rightIndex++; }
         else {
             Tuple combined(leftTuple.size() + rightTuple.size());
             combined.insert(combined.begin(), leftTuple.begin(), leftTuple.end());

@@ -43,22 +43,9 @@ class DBMSImplementationForMarks {
 
     // **QUERY PARAMETERS**
 
-    static constexpr size_t joinAttributeIndex = 0;
-    static constexpr size_t selectAttributeIndex = 1;
-    static constexpr size_t sumAttributeIndex = 2;
-
-    // **HELPER FUNCTIONS TO CHECK CONSTRAINTS ON WEAKLY TYPED ATTRIBUTE VALUES**
-
-    // General purpose comparison function for weakly typed attribute values
-    // Returns a pair where the second boolean value determines if the comparison was valid and safe
-    // The first value returns an int which is left - right for numerical types and strcmp for c-strings
-    static std::pair<int, bool> comp(const AttributeValue &left, const AttributeValue &right);
-
-    // Checks equality constraint on two weakly typed attribute values
-    inline static std::pair<bool, bool> equals(const AttributeValue &left, const AttributeValue &right);
-
-    // Checks less than constraint on two weakly typed attribute values
-    inline static std::pair<bool, bool> lessThan(const AttributeValue &left, const AttributeValue &right);
+    static constexpr size_t joinAttributeIndex = 0; // a
+    static constexpr size_t selectAttributeIndex = 1; // b
+    static constexpr size_t sumAttributeIndex = 2; // c
 
     // **MAIN QUERY FUNCTIONS**
 
