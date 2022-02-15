@@ -43,7 +43,6 @@ class DBMSImplementationForMarks {
 
     // **QUERY PARAMETERS**
 
-    static constexpr size_t sortAttributeIndex = 0;
     static constexpr size_t joinAttributeIndex = 0;
     static constexpr size_t selectAttributeIndex = 1;
     static constexpr size_t sumAttributeIndex = 2;
