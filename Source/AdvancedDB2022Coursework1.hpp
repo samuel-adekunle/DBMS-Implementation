@@ -54,6 +54,10 @@ class DBMSImplementationForMarks {
     // Smaller relation should be used as the buildSide
     static const Relation *hashJoin(const Relation *probeSide, const Relation *buildSide);
 
+    static const Relation *merge(const Relation *leftSide, const Relation *rightSide);
+
+    static const Relation *mergeSort(const Relation::const_iterator &begin, const Relation::const_iterator &end);
+
     // Returns new sorted relation
     static const Relation *sorted(const Relation *relation);
 
