@@ -41,13 +41,14 @@ std::pair<int, bool> DBMSImplementationForMarks::comp(const AttributeValue &left
 bool DBMSImplementationForMarks::lessThan(const AttributeValue &left, const AttributeValue &right) {
     auto[value, valid] = comp(left, right);
     if (valid) return value < 0;
-    if (left.valueless_by_exception()) { return false; }
-    if (right.valueless_by_exception()) { return true; }
+    if (left.index() == 2 && getStringValue(left) == nullptr) { return false; }
+    if (right.index() == 2 && getStringValue(right) == nullptr) { return true; }
     return left.index() < right.index();
 }
 
 // **MAIN QUERY FUNCTIONS**
 
+// TODO - implement
 // Implements hash join algorithm
 // Smaller relation should be used as the buildSide
 const Relation *DBMSImplementationForMarks::hashJoin(const Relation *const probeSide, const Relation *const buildSide) {
@@ -82,7 +83,7 @@ const Relation *DBMSImplementationForMarks::hashJoin(const Relation *const probe
             unsigned long hashValue = hash(probeValue);
 
             while (!hashTable->at(hashValue).empty() &&
-                   hashTable->at(hashValue).at(joinAttributeIndex) != probeValue) {
+                    hashTable->at(hashValue).at(joinAttributeIndex) != probeValue) {
                 hashValue = nextSlot(hashValue);
             }
 
@@ -170,6 +171,7 @@ const Relation *DBMSImplementationForMarks::sortMergeJoin(const Relation *leftSi
     return result;
 }
 
+// TODO - review
 // Selects tuples where sum of selected attribute values is greater than the threshold
 const Relation *DBMSImplementationForMarks::select(const Relation *input, const int threshold) {
     if (input == nullptr) { return nullptr; }
@@ -185,6 +187,7 @@ const Relation *DBMSImplementationForMarks::select(const Relation *input, const 
     return result;
 }
 
+// TODO - review
 // Returns sum of product of the selected attribute values
 long DBMSImplementationForMarks::sumOfProduct(const Relation *input) {
     if (input == nullptr) { return 0; }
