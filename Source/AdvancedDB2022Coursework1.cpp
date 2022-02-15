@@ -39,19 +39,19 @@ std::pair<int, bool> DBMSImplementationForMarks::comp(const AttributeValue &left
 }
 
 // Checks equality constraint on two weakly typed attribute values
-inline bool DBMSImplementationForMarks::equals(const AttributeValue &left, const AttributeValue &right) {
+// Returns a pair of bools where the first is the result of the comparison and the second is its validity
+inline std::pair<bool, bool>
+DBMSImplementationForMarks::equals(const AttributeValue &left, const AttributeValue &right) {
     const std::pair<int, bool> comparison = comp(left, right);
-    return comparison.second && (comparison.first == 0);
+    return {comparison.first == 0, comparison.second};
 }
 
 // Checks less than constraint on two weakly typed attribute values
-inline bool DBMSImplementationForMarks::lessThan(const AttributeValue &left, const AttributeValue &right) {
+// Returns a pair of bools where the first is the result of the comparison and the second is its validity
+inline std::pair<bool, bool>
+DBMSImplementationForMarks::lessThan(const AttributeValue &left, const AttributeValue &right) {
     const std::pair<int, bool> comparison = comp(left, right);
-    if (comparison.second) { return comparison.first < 0; }
-    else {
-        // TODO - handle comparison on invalid types
-        return false;
-    }
+    return {comparison.first < 0, comparison.second};
 }
 
 // **MAIN QUERY FUNCTIONS**
@@ -84,8 +84,9 @@ const Relation *DBMSImplementationForMarks::sortMergeJoin(const Relation *leftSi
         const AttributeValue &leftValue = leftTuple.at(joinAttributeIndex);
         const AttributeValue &rightValue = rightTuple.at(joinAttributeIndex);
 
-        if (!lessThan(leftValue, rightValue)) { leftIndex++; }
-        else if (lessThan(rightValue, leftValue)) { rightIndex++; }
+        // TODO - confirm logic here works
+        if (lessThan(leftValue, rightValue).first) { leftIndex++; }
+        else if (lessThan(rightValue, leftValue).first) { rightIndex++; }
         else {
             Tuple combined(leftTuple.size() + rightTuple.size());
             combined.insert(combined.begin(), leftTuple.begin(), leftTuple.end());

@@ -56,10 +56,10 @@ class DBMSImplementationForMarks {
     static std::pair<int, bool> comp(const AttributeValue &left, const AttributeValue &right);
 
     // Checks equality constraint on two weakly typed attribute values
-    inline static bool equals(const AttributeValue &left, const AttributeValue &right);
+    inline static std::pair<bool, bool> equals(const AttributeValue &left, const AttributeValue &right);
 
     // Checks less than constraint on two weakly typed attribute values
-    inline static bool lessThan(const AttributeValue &left, const AttributeValue &right);
+    inline static std::pair<bool, bool> lessThan(const AttributeValue &left, const AttributeValue &right);
 
     // **MAIN QUERY FUNCTIONS**
 
