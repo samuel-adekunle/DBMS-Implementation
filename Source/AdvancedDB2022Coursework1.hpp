@@ -39,9 +39,8 @@ class DBMSImplementationForMarks {
     // **POINTERS TO RELATIONS**
     // Lifetimes are guaranteed to be longer than DBMS implementation so no need to garbage collect
 
-    const Relation *large1, *large2, *small;
+    Relation *large1, *large2, *small;
 
-    const Relation *sortedLarge1, *sortedLarge2;
     // **QUERY PARAMETERS**
 
     static constexpr size_t joinAttributeIndex = 0; // a
@@ -50,16 +49,23 @@ class DBMSImplementationForMarks {
 
     // **MAIN QUERY FUNCTIONS**
 
+    // General purpose comparison function for weakly typed attribute values
+    // Returns a pair where the second boolean value determines if the comparison was valid and safe
+    // The first value returns an int which is left - right for numerical types and strcmp for c-strings
+    static std::pair<int, bool> comp(const AttributeValue &left, const AttributeValue &right);
+
     // Implements hash join algorithm
     // Smaller relation should be used as the buildSide
     static const Relation *hashJoin(const Relation *probeSide, const Relation *buildSide);
 
-    static const Relation *merge(const Relation *leftSide, const Relation *rightSide);
+    // TODO - add comments
+    static void merge(Relation *relation, size_t begin, size_t mid, size_t end);
 
-    static const Relation *mergeSort(const Relation::const_iterator &begin, const Relation::const_iterator &end);
+    // TODO - add comments
+    static void mergeSort(Relation *relation, size_t begin, size_t end);
 
     // Returns new sorted relation
-    static const Relation *sorted(const Relation *relation);
+    static void sort(Relation *relation);
 
     // Implements sort-merge join algorithm
     // Assumes both relations are sorted and contain unique values
@@ -77,27 +83,22 @@ public:
                   Relation const *s) {
 
         // store pointers to relations
-        large1 = l1;
-        large2 = l2;
-        small = s;
+        large1 = new Relation(*l1);
+        large2 = new Relation(*l2);
+        small = new Relation(*s);
 
-        // pre-sort large 1 and large 2
-        sortedLarge1 = sorted(large1);
-        sortedLarge2 = sorted(large2);
+        // sort tables
+        sort(large1);
+        sort(large2);
+        sort(small);
+
+        // TODO - build hash table for small
     }
 
     long runQuery(long threshold = 9) {
-        const Relation *buffer1 = sortMergeJoin(sortedLarge1, sortedLarge2);
-
-        const Relation *buffer2;
-        if (buffer1->size() < small->size()) {
-            buffer2 = hashJoin(small, buffer1);
-        } else {
-            buffer2 = hashJoin(buffer1, small);
-        }
-
+        const Relation *buffer1 = sortMergeJoin(large1, large2);
+        const Relation *buffer2 = sortMergeJoin(buffer1, small);
         const Relation *buffer3 = select(buffer2, threshold);
-
         long result = sumOfProduct(buffer3);
 
         // clean up buffers on heap
@@ -105,9 +106,10 @@ public:
         delete buffer2;
         delete buffer3;
 
-        // delete sorted tables
-        delete sortedLarge1;
-        delete sortedLarge2;
+        // delete saved tables
+        delete large1;
+        delete large2;
+        delete small;
 
         return result;
     }

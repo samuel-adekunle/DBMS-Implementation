@@ -1,5 +1,41 @@
 #include "AdvancedDB2022Coursework1.hpp"
 
+// General purpose comparison function for weakly typed attribute values
+// Returns a pair where the second boolean value determines if the comparison was valid and safe
+// The first value returns an int which is left - right for numerical types and strcmp for c-strings
+std::pair<int, bool> DBMSImplementationForMarks::comp(const AttributeValue &left, const AttributeValue &right) {
+    auto leftType = getAttributeValueType(left);
+    auto rightType = getAttributeValueType(right);
+    if (leftType != rightType) { return {0, false}; } // Values of different types don't compare
+    switch (leftType) {
+        case 0: // long
+        {
+            return {getLongValue(left) - getLongValue(right), true};
+        }
+        case 1: // double
+        {
+            // round doubles to the nearest integer (can't equal-compare floating point numbers)
+            long leftDoubleValue = lround(getdoubleValue(left));
+            long rightDoubleValue = lround(getdoubleValue(right));
+            return {leftDoubleValue - rightDoubleValue, true};
+        }
+        case 2: // char const *
+        {
+            auto leftStringValue = getStringValue(left);
+            auto rightStringValue = getStringValue(right);
+
+            // null values don't equal anything
+            if (leftStringValue == nullptr || rightStringValue == nullptr) { return {0, false}; }
+            else {
+                return {strcmp(leftStringValue, rightStringValue), true};
+            }
+        }
+        default: {
+            return {0, false};
+        }
+    }
+}
+
 // **MAIN QUERY FUNCTIONS**
 
 // Implements hash join algorithm
@@ -54,57 +90,51 @@ const Relation *DBMSImplementationForMarks::hashJoin(const Relation *const probe
     return new Relation;
 }
 
-const Relation *DBMSImplementationForMarks::merge(const Relation *leftSide, const Relation *rightSide) {
-    auto *result = new Relation(leftSide->size() + rightSide->size());
-    size_t leftIndex = 0, rightIndex = 0;
-    while (leftIndex < leftSide->size() && rightIndex < rightSide->size()) {
-        const Tuple &leftTuple = leftSide->at(leftIndex);
-        const Tuple &rightTuple = rightSide->at(rightIndex);
+// TODO - add comments
+void DBMSImplementationForMarks::merge(Relation *relation, const size_t begin, const size_t mid, const size_t end) {
 
-        const AttributeValue &leftValue = leftTuple.at(joinAttributeIndex);
-        const AttributeValue &rightValue = rightTuple.at(joinAttributeIndex);
+    size_t leftSize = mid - begin + 1, rightSize = end - mid;
+    size_t leftIndex = 0, rightIndex = 0, relationIndex;
+    Relation leftSide(leftSize), rightSide(rightSize);
 
-        if (leftValue < rightValue) {
-            result->push_back(leftTuple);
-            leftIndex++;
+    for (; leftIndex < leftSize; leftIndex++) { leftSide[leftIndex] = relation->at(begin + leftIndex); }
+    for (; rightIndex < rightSize; rightIndex++) { rightSide[rightIndex] = relation->at(mid + rightIndex + 1); }
+
+    leftIndex = 0;
+    rightIndex = 0;
+
+    for (relationIndex = begin; leftIndex < leftSize && rightIndex < rightSize; relationIndex++) {
+        if (leftSide.at(leftIndex) < rightSide.at(rightIndex)) {
+            relation->at(relationIndex) = leftSide.at(leftIndex++);
         } else {
-            result->push_back(rightTuple);
-            rightIndex++;
+            relation->at(relationIndex) = rightSide.at(rightIndex++);
         }
     }
 
-    while (leftIndex < leftSide->size()) { result->push_back(leftSide->at(leftIndex++)); }
-    while (rightIndex < rightSide->size()) { result->push_back(rightSide->at(rightIndex++)); }
-
-    return result;
+    while (leftIndex < leftSize) { relation->at(relationIndex++) = leftSide.at(leftIndex++); }
+    while (rightIndex < rightSize) { relation->at(relationIndex) = rightSide.at(rightIndex++); }
 }
 
-const Relation *
-DBMSImplementationForMarks::mergeSort(const Relation::const_iterator &begin, const Relation::const_iterator &end) {
-    int dist = std::distance(begin, end);
-    if (dist > 1) {
-        auto mid = std::next(begin, dist >> 1);
-        auto left = mergeSort(begin, mid);
-        auto right = mergeSort(mid, end);
-        auto combined = merge(left, right);
-        // garbage collect
-        delete left;
-        delete right;
-        return combined;
+// TODO - add comments
+void DBMSImplementationForMarks::mergeSort(Relation *relation, const size_t begin, const size_t end) {
+    if (begin < end) {
+        size_t mid = (begin + end) / 2;
+        mergeSort(relation, begin, mid);
+        mergeSort(relation, mid + 1, end);
+        merge(relation, begin, mid, end);
     }
-    return new Relation(begin, end);
 }
 
-// Returns new sorted relation
-const Relation *DBMSImplementationForMarks::sorted(const Relation *relation) {
-    if (relation == nullptr) { return nullptr; }
-    return mergeSort(relation->cbegin(), relation->cend());
+// Sorts relation
+void DBMSImplementationForMarks::sort(Relation *relation) {
+    if (relation->size() < 2) { return; }
+    mergeSort(relation, 0, relation->size() - 1);
 }
 
 // Implements sort-merge join algorithm
 // Assumes both relations are sorted and contain unique values
-const Relation *DBMSImplementationForMarks::sortMergeJoin(const Relation *const leftSide,
-                                                          const Relation *const rightSide) {
+const Relation *DBMSImplementationForMarks::sortMergeJoin(const Relation *leftSide,
+                                                          const Relation *rightSide) {
     if (leftSide == nullptr || rightSide == nullptr) { return nullptr; }
     auto *result = new Relation; // buffer deleted by runQuery function
     size_t leftIndex = 0, rightIndex = 0;
@@ -112,32 +142,41 @@ const Relation *DBMSImplementationForMarks::sortMergeJoin(const Relation *const 
         const Tuple &leftTuple = leftSide->at(leftIndex);
         const Tuple &rightTuple = rightSide->at(rightIndex);
 
-        const AttributeValue &leftValue = leftTuple.at(joinAttributeIndex);
-        const AttributeValue &rightValue = rightTuple.at(joinAttributeIndex);
+        auto leftValue = leftTuple.at(joinAttributeIndex);
+        auto rightValue = rightTuple.at(joinAttributeIndex);
 
-        if (leftValue < rightValue) { leftIndex++; }
-        else if (rightValue < leftValue) { rightIndex++; }
-        else {
-            Tuple combined(leftTuple.size() + rightTuple.size());
-            combined.insert(combined.begin(), leftTuple.begin(), leftTuple.end());
-            combined.insert(combined.end(), rightTuple.begin(), rightTuple.end());
-            result->push_back(combined);
-            leftIndex++;
-            rightIndex++;
+        auto[value, valid] = comp(leftValue, rightValue);
+        if (valid) {
+            if (value < 0) leftIndex++;
+            else if (value > 0) rightIndex++;
+            else {
+                Tuple combined;
+                combined.reserve(leftTuple.size() + rightTuple.size());
+                combined.insert(combined.begin(), leftTuple.begin(), leftTuple.end());
+                combined.insert(combined.end(), rightTuple.begin(), rightTuple.end());
+                result->push_back(combined);
+                leftIndex++;
+            }
+        } else {
+            if (leftValue.valueless_by_exception()) leftIndex++;
+            else if (rightValue.valueless_by_exception()) rightIndex++;
+            else {
+                leftIndex++;
+            }
         }
     }
     return result;
 }
 
 // Selects tuples where sum of selected attribute values is greater than the threshold
-const Relation *DBMSImplementationForMarks::select(const Relation *const input, const int threshold) {
+const Relation *DBMSImplementationForMarks::select(const Relation *input, const int threshold) {
     if (input == nullptr) { return nullptr; }
     auto *result = new Relation;
     for (const auto &row: *input) {
         long largeOneValue = getLongValue(row[selectAttributeIndex]);
         long largeTwoValue = getLongValue(row[selectAttributeIndex + 3]);
         long smallValue = getLongValue(row[selectAttributeIndex + 6]);
-        if (largeOneValue + largeTwoValue + smallValue > threshold) {
+        if ((largeOneValue + largeTwoValue + smallValue) > threshold) {
             result->push_back(row);
         }
     }
@@ -145,7 +184,7 @@ const Relation *DBMSImplementationForMarks::select(const Relation *const input, 
 }
 
 // Returns sum of product of the selected attribute values
-long DBMSImplementationForMarks::sumOfProduct(const Relation *const input) {
+long DBMSImplementationForMarks::sumOfProduct(const Relation *input) {
     if (input == nullptr) { return 0; }
     long sum = 0;
     for (const auto &row: *input) {
@@ -153,7 +192,7 @@ long DBMSImplementationForMarks::sumOfProduct(const Relation *const input) {
         long largeTwoValue = getLongValue(row[sumAttributeIndex + 3]);
         long smallValue = getLongValue(row[sumAttributeIndex + 6]);
 
-        sum += largeOneValue * largeTwoValue * smallValue;
+        sum += (largeOneValue * largeTwoValue * smallValue);
     }
     return sum;
 }
