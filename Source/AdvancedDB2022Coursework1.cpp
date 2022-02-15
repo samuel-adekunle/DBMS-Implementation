@@ -123,7 +123,7 @@ void DBMSImplementationForMarks::merge(Relation *relation, const size_t begin, c
     }
 
     while (leftIndex < leftSize) { relation->at(relationIndex++) = leftSide.at(leftIndex++); }
-    while (rightIndex < rightSize) { relation->at(relationIndex) = rightSide.at(rightIndex++); }
+    while (rightIndex < rightSize) { relation->at(relationIndex++) = rightSide.at(rightIndex++); }
 }
 
 // TODO - add comments
