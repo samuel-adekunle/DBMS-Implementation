@@ -68,10 +68,10 @@ class DBMSImplementationForMarks {
     // Implements sort-merge join algorithm
     const Relation *sortMergeJoin(const Relation *leftSide, const Relation *rightSide, size_t attributeIndex);
 
-    // Selects tuples where sum of b attribute values is greater than the threshold
+    // Selects tuples where sum of selected attribute values is greater than the threshold
     const Relation *select(const Relation *input, int threshold, size_t attributeIndex);
 
-    // Returns sum of product of c attribute values
+    // Returns sum of product of the selected attribute values
     long sumOfProduct(const Relation *input, size_t attributeIndex);
 
 public:

@@ -2,16 +2,20 @@
 
 // **HELPER FUNCTIONS TO CHECK CONSTRAINTS ON WEAKLY TYPED ATTRIBUTE VALUES**
 
+// Checks equality constraint on two weakly typed attribute values
 bool DBMSImplementationForMarks::equals(const AttributeValue &left, const AttributeValue &right) {
     return false;
 }
 
+// Checks less than constraint on two weakly typed attribute values
 bool DBMSImplementationForMarks::lessThan(const AttributeValue &left, const AttributeValue &right) {
     return false;
 }
 
 // **MAIN QUERY FUNCTIONS**
 
+// Implements hash join algorithm
+// Smaller relation should be used as the buildSide
 const Relation *DBMSImplementationForMarks::hashJoin(const Relation *probeSide, const Relation *buildSide,
                                                      const size_t attributeIndex) {
     if (probeSide == nullptr || buildSide == nullptr) { return nullptr; }
@@ -19,12 +23,14 @@ const Relation *DBMSImplementationForMarks::hashJoin(const Relation *probeSide, 
     return new Relation;
 }
 
+// Returns a sorted relation
 const Relation *DBMSImplementationForMarks::sortRelation(const Relation *relation, const size_t attributeIndex) {
     if (relation == nullptr) { return nullptr; }
     // TODO
     return new Relation;
 }
 
+// Implements sort-merge join algorithm
 const Relation *DBMSImplementationForMarks::sortMergeJoin(const Relation *leftSide, const Relation *rightSide,
                                                           const size_t attributeIndex) {
     if (leftSide == nullptr || rightSide == nullptr) { return nullptr; }
@@ -36,14 +42,15 @@ const Relation *DBMSImplementationForMarks::sortMergeJoin(const Relation *leftSi
     return new Relation;
 }
 
-const Relation *
-DBMSImplementationForMarks::select(const Relation *input, const int threshold, const size_t attributeIndex) {
+// Selects tuples where sum of selected attribute values is greater than the threshold
+const Relation *DBMSImplementationForMarks::select(const Relation *input, const int threshold,
+                                                   const size_t attributeIndex) {
     if (input == nullptr) { return nullptr; }
     // TODO
     return new Relation;
 }
 
-// Returns sumOfProduct of product of c attribute values
+// Returns sum of product of the selected attribute values
 long DBMSImplementationForMarks::sumOfProduct(const Relation *input, size_t attributeIndex) {
     if (input == nullptr) { return 0; }
     // TODO
