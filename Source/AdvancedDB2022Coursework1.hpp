@@ -95,9 +95,9 @@ public:
     long runQuery(const long threshold = 9) {
         const Relation *buffer1 = hashJoin(large2, small);
         DBMSImplementationForMarks::sort(buffer1); // sorts in place
-        const Relation *const buffer2 = sortMergeJoin(large1, buffer1);
-        const Relation *const buffer3 = select(buffer2, threshold);
-        const long result = sumOfProduct(buffer3);
+        const Relation *buffer2 = sortMergeJoin(large1, buffer1);
+        const Relation *buffer3 = select(buffer2, threshold);
+        long result = sumOfProduct(buffer3);
 
         // clean up buffers on heap
         delete buffer1;
