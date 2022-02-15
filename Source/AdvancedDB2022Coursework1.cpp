@@ -10,9 +10,10 @@ const Relation *DBMSImplementationForMarks::hashJoin(const Relation *const probe
     return new Relation;
 }
 
-// Sorts relation in-place.
-void DBMSImplementationForMarks::sort(const Relation *relation) {
-    // TODO - implement any efficient sorting algorithm
+// Returns new sorted relation
+const Relation *DBMSImplementationForMarks::sorted(const Relation *relation) {
+    // TODO - sorting algorithm
+    return relation;
 }
 
 // Implements sort-merge join algorithm
