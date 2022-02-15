@@ -67,8 +67,8 @@ class DBMSImplementationForMarks {
     // Smaller relation should be used as the buildSide
     static const Relation *hashJoin(const Relation *probeSide, const Relation *buildSide);
 
-    // Returns a sorted relation
-    static const Relation *sort(const Relation *relation);
+    // Sorts relation in-place.
+    static void sort(const Relation *relation);
 
     // Implements sort-merge join algorithm
     // Assumes both relations are sorted and contain unique values
@@ -85,24 +85,24 @@ public:
                   Relation const *l2,
                   Relation const *s) {
 
-        // save pointers to tables
-        large1 = DBMSImplementationForMarks::sort(l1);
+        // store pointers to relations
+        DBMSImplementationForMarks::sort(l1);
+        large1 = l1;
         large2 = l2;
         small = s;
     }
 
-    long runQuery(long threshold = 9) {
+    long runQuery(const long threshold = 9) {
         const Relation *buffer1 = hashJoin(large2, small);
-        const Relation *buffer2 = DBMSImplementationForMarks::sort(buffer1);
-        const Relation *buffer3 = sortMergeJoin(large1, buffer2);
-        const Relation *buffer4 = select(buffer2, threshold);
-        long result = sumOfProduct(buffer4);
+        DBMSImplementationForMarks::sort(buffer1); // sorts in place
+        const Relation *const buffer2 = sortMergeJoin(large1, buffer1);
+        const Relation *const buffer3 = select(buffer2, threshold);
+        const long result = sumOfProduct(buffer3);
 
         // clean up buffers on heap
         delete buffer1;
         delete buffer2;
         delete buffer3;
-        delete buffer4;
 
         return result;
     }

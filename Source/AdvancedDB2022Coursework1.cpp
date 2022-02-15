@@ -40,16 +40,14 @@ std::pair<int, bool> DBMSImplementationForMarks::comp(const AttributeValue &left
 
 // Checks equality constraint on two weakly typed attribute values
 // Returns a pair of bools where the first is the result of the comparison and the second is its validity
-inline std::pair<bool, bool>
-DBMSImplementationForMarks::equals(const AttributeValue &left, const AttributeValue &right) {
+std::pair<bool, bool> DBMSImplementationForMarks::equals(const AttributeValue &left, const AttributeValue &right) {
     const std::pair<int, bool> comparison = comp(left, right);
     return {comparison.first == 0, comparison.second};
 }
 
 // Checks less than constraint on two weakly typed attribute values
 // Returns a pair of bools where the first is the result of the comparison and the second is its validity
-inline std::pair<bool, bool>
-DBMSImplementationForMarks::lessThan(const AttributeValue &left, const AttributeValue &right) {
+std::pair<bool, bool> DBMSImplementationForMarks::lessThan(const AttributeValue &left, const AttributeValue &right) {
     const std::pair<int, bool> comparison = comp(left, right);
     return {comparison.first < 0, comparison.second};
 }
@@ -58,22 +56,21 @@ DBMSImplementationForMarks::lessThan(const AttributeValue &left, const Attribute
 
 // Implements hash join algorithm
 // Smaller relation should be used as the buildSide
-const Relation *DBMSImplementationForMarks::hashJoin(const Relation *probeSide, const Relation *buildSide) {
+const Relation *DBMSImplementationForMarks::hashJoin(const Relation *const probeSide, const Relation *const buildSide) {
     if (probeSide == nullptr || buildSide == nullptr) { return nullptr; }
     // TODO - implement hash join algorithm
     return new Relation;
 }
 
-// Returns a sorted relation
-const Relation *DBMSImplementationForMarks::sort(const Relation *relation) {
-    if (relation == nullptr) { return nullptr; }
+// Sorts relation in-place.
+void DBMSImplementationForMarks::sort(const Relation *relation) {
     // TODO - implement any efficient sorting algorithm
-    return new Relation;
 }
 
 // Implements sort-merge join algorithm
 // Assumes both relations are sorted and contain unique values
-const Relation *DBMSImplementationForMarks::sortMergeJoin(const Relation *leftSide, const Relation *rightSide) {
+const Relation *DBMSImplementationForMarks::sortMergeJoin(const Relation *const leftSide,
+                                                          const Relation *const rightSide) {
     if (leftSide == nullptr || rightSide == nullptr) { return nullptr; }
     auto *result = new Relation; // buffer deleted by runQuery function
     size_t leftIndex = 0, rightIndex = 0;
@@ -100,14 +97,14 @@ const Relation *DBMSImplementationForMarks::sortMergeJoin(const Relation *leftSi
 }
 
 // Selects tuples where sum of selected attribute values is greater than the threshold
-const Relation *DBMSImplementationForMarks::select(const Relation *input, const int threshold) {
+const Relation *DBMSImplementationForMarks::select(const Relation *const input, const int threshold) {
     if (input == nullptr) { return nullptr; }
     // TODO - implement selection operator
     return new Relation;
 }
 
 // Returns sum of product of the selected attribute values
-long DBMSImplementationForMarks::sumOfProduct(const Relation *input) {
+long DBMSImplementationForMarks::sumOfProduct(const Relation *const input) {
     if (input == nullptr) { return 0; }
     // TODO - implement sum of product aggregation
     return 0;
