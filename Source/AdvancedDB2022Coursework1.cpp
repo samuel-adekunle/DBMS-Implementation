@@ -36,6 +36,16 @@ std::pair<int, bool> DBMSImplementationForMarks::comp(const AttributeValue &left
     }
 }
 
+// Checks less than constraint on two weakly typed attribute values
+// Returns a pair of bools where the first is the result of the comparison and the second is its validity
+bool DBMSImplementationForMarks::lessThan(const AttributeValue &left, const AttributeValue &right) {
+    auto[value, valid] = comp(left, right);
+    if (valid) return value < 0;
+    if (left.valueless_by_exception()) { return false; }
+    if (right.valueless_by_exception()) { return true; }
+    return left.index() < right.index();
+}
+
 // **MAIN QUERY FUNCTIONS**
 
 // Implements hash join algorithm
@@ -92,7 +102,6 @@ const Relation *DBMSImplementationForMarks::hashJoin(const Relation *const probe
 
 // TODO - add comments
 void DBMSImplementationForMarks::merge(Relation *relation, const size_t begin, const size_t mid, const size_t end) {
-
     size_t leftSize = mid - begin + 1, rightSize = end - mid;
     size_t leftIndex = 0, rightIndex = 0, relationIndex;
     Relation leftSide(leftSize), rightSide(rightSize);
@@ -104,7 +113,8 @@ void DBMSImplementationForMarks::merge(Relation *relation, const size_t begin, c
     rightIndex = 0;
 
     for (relationIndex = begin; leftIndex < leftSize && rightIndex < rightSize; relationIndex++) {
-        if (leftSide.at(leftIndex) < rightSide.at(rightIndex)) {
+        if (lessThan(leftSide.at(leftIndex).at(joinAttributeIndex),
+                     rightSide.at(rightIndex).at(joinAttributeIndex))) {
             relation->at(relationIndex) = leftSide.at(leftIndex++);
         } else {
             relation->at(relationIndex) = rightSide.at(rightIndex++);
@@ -145,24 +155,16 @@ const Relation *DBMSImplementationForMarks::sortMergeJoin(const Relation *leftSi
         auto leftValue = leftTuple.at(joinAttributeIndex);
         auto rightValue = rightTuple.at(joinAttributeIndex);
 
-        auto[value, valid] = comp(leftValue, rightValue);
-        if (valid) {
-            if (value < 0) leftIndex++;
-            else if (value > 0) rightIndex++;
-            else {
-                Tuple combined;
-                combined.reserve(leftTuple.size() + rightTuple.size());
-                combined.insert(combined.begin(), leftTuple.begin(), leftTuple.end());
-                combined.insert(combined.end(), rightTuple.begin(), rightTuple.end());
-                result->push_back(combined);
-                leftIndex++;
-            }
-        } else {
-            if (leftValue.valueless_by_exception()) leftIndex++;
-            else if (rightValue.valueless_by_exception()) rightIndex++;
-            else {
-                leftIndex++;
-            }
+
+        if (lessThan(leftValue, rightValue)) leftIndex++;
+        else if (lessThan(rightValue, leftValue)) rightIndex++;
+        else {
+            Tuple combined;
+            combined.reserve(leftTuple.size() + rightTuple.size());
+            combined.insert(combined.begin(), leftTuple.begin(), leftTuple.end());
+            combined.insert(combined.end(), rightTuple.begin(), rightTuple.end());
+            result->push_back(combined);
+            leftIndex++;
         }
     }
     return result;
