@@ -58,6 +58,10 @@ class DBMSImplementationForMarks {
     // Returns a pair of bools where the first is the result of the comparison and the second is its validity
     static bool lessThan(const AttributeValue &left, const AttributeValue &right);
 
+    // Checks equality constraint on two weakly typed attribute values
+    // Returns a pair of bools where the first is the result of the comparison and the second is its validity
+    static bool equals(const AttributeValue &left, const AttributeValue &right);
+
     // Implements hash join algorithm
     // Smaller relation should be used as the buildSide
     static const Relation *hashJoin(const Relation *probeSide, const Relation *buildSide);
