@@ -168,25 +168,24 @@ size_t DBMSImplementationForMarks::nextSlot(const size_t slot, const size_t hash
 
 // Builds a hash-index for the given relation
 std::pair<const Relation *, size_t> DBMSImplementationForMarks::hashBuild(const Relation *buildSide) {
-    if (buildSide == nullptr) { return nullptr; }
+    if (buildSide == nullptr) { return {nullptr, 0}; }
     const size_t hashTableSize = buildSide->size() * 2;
-    const size_t key = nextPrime(buildSide->size());
+    const size_t key = nextPrime(size_t(buildSide->size() * 0.75));
 
-    auto *hashTable = new Relation(hashTableSize);
+    auto *table = new Relation(hashTableSize);
 
-    // Build
     for (const auto &buildTuple: *buildSide) {
         const AttributeValue &buildValue = buildTuple.at(joinAttributeIndex);
         if (buildValue.index() == 2 && getStringValue(buildValue) == nullptr)
             continue;
         unsigned long hashValue = hash(buildValue, key);
-        while (!hashTable->at(hashValue).empty()) {
+        while (!table->at(hashValue).empty()) {
             hashValue = nextSlot(hashValue, hashTableSize);
         }
-        hashTable->at(hashValue) = buildTuple;
+        table->at(hashValue) = buildTuple;
     }
 
-    return {hashTable, hashKey};
+    return {table, key};
 }
 
 // Implements hash join algorithm by probing the given hash table
