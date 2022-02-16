@@ -111,7 +111,7 @@ bool DBMSImplementationForMarks::isPrime(const size_t n) {
     // middle five numbers in below loop
     if (n % 2 == 0 || n % 3 == 0) return false;
 
-    for (int i = 5; i * i <= n; i = i + 6)
+    for (size_t i = 5; i * i <= n; i = i + 6)
         if (n % i == 0 || n % (i + 2) == 0)
             return false;
 
@@ -253,7 +253,6 @@ const Relation *DBMSImplementationForMarks::sortMergeJoin(const Relation *leftSi
 // TODO - review
 // Selects tuples where sum of selected attribute values is greater than the threshold
 const Relation *DBMSImplementationForMarks::select(const Relation *input, const long threshold = 9) {
-    if (input == nullptr) { return nullptr; }
     auto *result = new Relation;
     for (const auto &row: *input) {
         long largeOneValue = getLongValue(row[selectAttributeIndex]);
@@ -269,7 +268,6 @@ const Relation *DBMSImplementationForMarks::select(const Relation *input, const 
 // TODO - review
 // Returns sum of product of the selected attribute values
 long DBMSImplementationForMarks::sumOfProduct(const Relation *input) {
-    if (input == nullptr) { return 0; }
     long sum = 0;
     for (const auto &row: *input) {
         long largeOneValue = getLongValue(row[sumAttributeIndex]);
