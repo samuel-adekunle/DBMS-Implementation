@@ -51,6 +51,10 @@ class DBMSImplementationForMarks {
     static constexpr size_t selectAttributeIndex = 1; // b
     static constexpr size_t sumAttributeIndex = 2; // c
 
+    static size_t largeOneTupleSize;
+    static size_t largeTwoTupleSize;
+    static size_t smallTupleSize;
+
     // **HELPER FUNCTIONS FOR COMPARISON OF WEAKLY TYPED VALUES**
 
     // General purpose comparison function for weakly typed attribute values
@@ -119,6 +123,10 @@ public:
         large1 = new Relation(*l1);
         large2 = new Relation(*l2);
         small = new Relation(*s);
+
+        largeOneTupleSize = getNumberOfValuesInTuple(large1->front());
+        largeTwoTupleSize = getNumberOfValuesInTuple(large2->front());
+        smallTupleSize = getNumberOfValuesInTuple(small->front());
 
         // sort tables
         sort(large1);

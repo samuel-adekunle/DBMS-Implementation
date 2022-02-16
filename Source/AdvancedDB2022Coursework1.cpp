@@ -250,14 +250,13 @@ const Relation *DBMSImplementationForMarks::sortMergeJoin(const Relation *leftSi
     return result;
 }
 
-// TODO - review
 // Selects tuples where sum of selected attribute values is greater than the threshold
 const Relation *DBMSImplementationForMarks::select(const Relation *input, const long threshold = 9) {
     auto *result = new Relation;
     for (const auto &row: *input) {
         long largeOneValue = getLongValue(row[selectAttributeIndex]);
-        long largeTwoValue = getLongValue(row[selectAttributeIndex + 3]);
-        long smallValue = getLongValue(row[selectAttributeIndex + 6]);
+        long largeTwoValue = getLongValue(row[selectAttributeIndex + largeOneTupleSize]);
+        long smallValue = getLongValue(row[selectAttributeIndex + largeOneTupleSize + largeTwoTupleSize]);
         if ((largeOneValue + largeTwoValue + smallValue) > threshold) {
             result->push_back(row);
         }
@@ -265,14 +264,13 @@ const Relation *DBMSImplementationForMarks::select(const Relation *input, const 
     return result;
 }
 
-// TODO - review
 // Returns sum of product of the selected attribute values
 long DBMSImplementationForMarks::sumOfProduct(const Relation *input) {
     long sum = 0;
     for (const auto &row: *input) {
         long largeOneValue = getLongValue(row[sumAttributeIndex]);
-        long largeTwoValue = getLongValue(row[sumAttributeIndex + 3]);
-        long smallValue = getLongValue(row[sumAttributeIndex + 6]);
+        long largeTwoValue = getLongValue(row[sumAttributeIndex + largeOneTupleSize]);
+        long smallValue = getLongValue(row[sumAttributeIndex + largeOneTupleSize + largeTwoTupleSize]);
 
         sum += (largeOneValue * largeTwoValue * smallValue);
     }
