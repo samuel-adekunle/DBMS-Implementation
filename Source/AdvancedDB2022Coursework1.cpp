@@ -2,10 +2,24 @@
 
 // **HELPER FUNCTIONS FOR COMPARISON OF WEAKLY TYPED VALUES**
 
+// Implementation of lexicographic string comparison
+int DBMSImplementationForMarks::strcmp(const char *str1, const char *str2) {
+    while ((*str1 != '\0' && *str2 != '\0') && *str1 == *str2) {
+        str1++;
+        str2++;
+    }
+
+    if (*str1 == *str2) {
+        return 0; // strings are identical
+    } else {
+        return *str1 - *str2;
+    }
+}
+
 // General purpose comparison function for weakly typed attribute values
 // Returns a pair where the second boolean value determines if the comparison was valid and safe
 // The first value returns an int which is left - right for numerical types and strcmp for c-strings
-std::pair<int, bool> DBMSImplementationForMarks::comp(const AttributeValue &left, const AttributeValue &right) {
+std::pair<int, bool> DBMSImplementationForMarks::compare(const AttributeValue &left, const AttributeValue &right) {
     auto leftType = getAttributeValueType(left);
     auto rightType = getAttributeValueType(right);
     if (leftType != rightType) { return {0, false}; } // Values of different types don't compare
@@ -17,8 +31,8 @@ std::pair<int, bool> DBMSImplementationForMarks::comp(const AttributeValue &left
         case 1: // double
         {
             // round doubles to the nearest integer (can't equal-compare floating point numbers)
-            long leftDoubleValue = lround(getdoubleValue(left));
-            long rightDoubleValue = lround(getdoubleValue(right));
+            double leftDoubleValue = getdoubleValue(left);
+            double rightDoubleValue = getdoubleValue(right);
             return {leftDoubleValue - rightDoubleValue, true};
         }
         case 2: // char const *
@@ -41,7 +55,7 @@ std::pair<int, bool> DBMSImplementationForMarks::comp(const AttributeValue &left
 // Checks less than constraint on two weakly typed attribute values
 // Returns a pair of bools where the first is the result of the comparison and the second is its validity
 bool DBMSImplementationForMarks::lessThan(const AttributeValue &left, const AttributeValue &right) {
-    auto[value, valid] = comp(left, right);
+    auto[value, valid] = compare(left, right);
     if (valid) return value < 0;
     if (left.index() == 2 && getStringValue(left) == nullptr) { return false; }
     if (right.index() == 2 && getStringValue(right) == nullptr) { return true; }
@@ -51,7 +65,7 @@ bool DBMSImplementationForMarks::lessThan(const AttributeValue &left, const Attr
 // Checks equality constraint on two weakly typed attribute values
 // Returns a pair of bools where the first is the result of the comparison and the second is its validity
 bool DBMSImplementationForMarks::equals(const AttributeValue &left, const AttributeValue &right) {
-    auto[value, valid] = comp(left, right);
+    auto[value, valid] = compare(left, right);
     return (value == 0) && valid;
 }
 

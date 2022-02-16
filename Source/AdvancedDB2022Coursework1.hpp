@@ -57,10 +57,13 @@ class DBMSImplementationForMarks {
 
     // **HELPER FUNCTIONS FOR COMPARISON OF WEAKLY TYPED VALUES**
 
+    // Implementation of lexicographic string comparison
+    static int strcmp(const char *str1, const char *str2);
+
     // General purpose comparison function for weakly typed attribute values
     // Returns a pair where the second boolean value determines if the comparison was valid and safe
     // The first value returns an int which is left - right for numerical types and strcmp for c-strings
-    static std::pair<int, bool> comp(const AttributeValue &left, const AttributeValue &right);
+    static std::pair<int, bool> compare(const AttributeValue &left, const AttributeValue &right);
 
     // Checks less than constraint on two weakly typed attribute values
     // Returns a pair of bools where the first is the result of the comparison and the second is its validity
