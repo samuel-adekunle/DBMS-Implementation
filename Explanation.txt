@@ -1,9 +1,14 @@
-What were the challenges of the coursework and how did you deal with them?
- - deciding what processing models and algorithms to use (decided to go with what was simplest first to get a working solution then planned to improve on it.
-  so that meant no processing model, and just processing the entire table at each step. essentially a direct 1-1 mapping of the relational algebra expressions.
+Decision on what processing models and algorithms to use :
+Start with what was simplest first to get a working solution then planned to improve on it by refactoring as we went along
+ We have found the need to:
+-	Create helpers comparison function for weekly typed values which returns a pair where the second Boolean value determines if the comparison was valid and safe (used to for the merge-sort join algorithm)
+ -Using linear probing for good locality and easy to implement
 
-How did you decide tuning parameters like join order?
- - It seemed intuitive to join the smaller table first and online references seemed to back up that intuition
+Decision on Tuning parameters:
+ - We decided to first sort-merge join the large tables and then to hash join that result with the small table. Since only the small table has duplicates it made sense to use the hash-join after the sort-merge join of the two large tables which don’t contain any duplicates. The hash-join implementation was meant to deal with duplicates, a sort-merge join with non-unique values was trickier.
 
-Performance of model
- -
+Decision on strategies for performance improvement:
+ -Saving run time performance loss by sorting the large table and building on the small one initially .
+-Maximize the hash table allocation by using a prime number for the hash function.
+-Using pointers to not have to copy all the tables at each call. this allows us to keep everything on the heap while being careful with garbage collection and manage all lifetime during the run query function.
+-Creating indices for the tables to speed up the query.
