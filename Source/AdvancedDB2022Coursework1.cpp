@@ -58,8 +58,9 @@ bool DBMSImplementationForMarks::equals(const AttributeValue &left, const Attrib
 // Implements hash join algorithm
 // Smaller relation should be used as the buildSide
 const Relation *DBMSImplementationForMarks::hashJoin(const Relation *const probeSide, const Relation *const buildSide) {
-    if (probeSide == nullptr || buildSide == nullptr) { return nullptr; }
-    else {
+    if (probeSide == nullptr || buildSide == nullptr) {
+        return nullptr;
+    } else {
         const size_t hashTableSize = buildSide->size() * 2;
         const long key = buildSide->size(); // TODO - find better way
         auto *hashTable = new Relation(hashTableSize);
@@ -88,11 +89,11 @@ const Relation *DBMSImplementationForMarks::hashJoin(const Relation *const probe
             return (slot + 1) % hashTableSize;
         };
 
-
         // Build
         for (const auto &buildTuple: *buildSide) {
             const AttributeValue &buildValue = buildTuple.at(joinAttributeIndex);
-            if (buildValue.index() == 2 && getStringValue(buildValue) == nullptr) continue;
+            if (buildValue.index() == 2 && getStringValue(buildValue) == nullptr)
+                continue;
             unsigned long hashValue = hash(buildValue);
             while (!hashTable->at(hashValue).empty()) {
                 hashValue = nextSlot(hashValue);
@@ -102,22 +103,26 @@ const Relation *DBMSImplementationForMarks::hashJoin(const Relation *const probe
 
         for (const auto &probeTuple: *probeSide) {
             const AttributeValue &probeValue = probeTuple.at(joinAttributeIndex);
-            if (probeValue.index() == 2 && getStringValue(probeValue) == nullptr) continue;
+            if (probeValue.index() == 2 && getStringValue(probeValue) == nullptr) { continue; }
 
             unsigned long hashValue = hash(probeValue);
-            while (!hashTable->at(hashValue).empty() &&
-                   !equals(hashTable->at(hashValue).at(joinAttributeIndex), probeValue)) {
-                hashValue = nextSlot(hashValue);
-            }
 
-            const Tuple &buildTuple = hashTable->at(hashValue);
-            if (buildTuple.empty()) continue;
-            if (equals(buildTuple.at(joinAttributeIndex), probeValue)) {
-                Tuple combined;
-                combined.reserve(buildTuple.size() + probeTuple.size());
-                combined.insert(combined.begin(), probeTuple.begin(), probeTuple.end());
-                combined.insert(combined.end(), buildTuple.begin(), buildTuple.end());
-                result->push_back(combined);
+            while (!hashTable->at(hashValue).empty()) {
+                while (!hashTable->at(hashValue).empty() &&
+                       !equals(hashTable->at(hashValue).at(joinAttributeIndex), probeValue)) {
+                    hashValue = nextSlot(hashValue);
+                }
+                const Tuple &buildTuple = hashTable->at(hashValue);
+                if (buildTuple.empty())
+                    continue;
+                if (equals(buildTuple.at(joinAttributeIndex), probeValue)) {
+                    Tuple combined;
+                    combined.reserve(buildTuple.size() + probeTuple.size());
+                    combined.insert(combined.begin(), probeTuple.begin(), probeTuple.end());
+                    combined.insert(combined.end(), buildTuple.begin(), buildTuple.end());
+                    result->push_back(combined);
+                }
+                hashValue = nextSlot(hashValue);
             }
         }
         return result;
@@ -197,7 +202,7 @@ const Relation *DBMSImplementationForMarks::sortMergeJoin(const Relation *leftSi
 
 // TODO - review
 // Selects tuples where sum of selected attribute values is greater than the threshold
-const Relation *DBMSImplementationForMarks::select(const Relation *input, const int threshold) {
+const Relation *DBMSImplementationForMarks::select(const Relation *input, const long threshold = 9) {
     if (input == nullptr) { return nullptr; }
     auto *result = new Relation;
     for (const auto &row: *input) {

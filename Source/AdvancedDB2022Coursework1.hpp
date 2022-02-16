@@ -80,7 +80,7 @@ class DBMSImplementationForMarks {
     static const Relation *sortMergeJoin(const Relation *leftSide, const Relation *rightSide);
 
     // Selects tuples where sum of selected attribute values is greater than the threshold
-    static const Relation *select(const Relation *input, int threshold);
+    static const Relation *select(const Relation *input, long threshold);
 
     // Returns sum of product of the selected attribute values
     static long sumOfProduct(const Relation *input);
@@ -98,7 +98,6 @@ public:
         // sort tables
         sort(large1);
         sort(large2);
-        sort(small);
 
         // TODO - build hash table for small
     }
