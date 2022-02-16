@@ -51,9 +51,9 @@ class DBMSImplementationForMarks {
     static constexpr size_t selectAttributeIndex = 1; // b
     static constexpr size_t sumAttributeIndex = 2; // c
 
-    static size_t largeOneTupleSize;
-    static size_t largeTwoTupleSize;
-    static size_t smallTupleSize;
+    static inline size_t largeOneTupleSize;
+    static inline size_t largeTwoTupleSize;
+    static inline size_t smallTupleSize;
 
     // **HELPER FUNCTIONS FOR COMPARISON OF WEAKLY TYPED VALUES**
 
