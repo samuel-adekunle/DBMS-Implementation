@@ -41,13 +41,17 @@ class DBMSImplementationForMarks {
 
     Relation *large1, *large2, *small;
 
+    // **INDICES
+    const Relation *hashTable;
+    size_t hashKey;
+
     // **QUERY PARAMETERS**
 
     static constexpr size_t joinAttributeIndex = 0; // a
     static constexpr size_t selectAttributeIndex = 1; // b
     static constexpr size_t sumAttributeIndex = 2; // c
 
-    // **MAIN QUERY FUNCTIONS**
+    // **HELPER FUNCTIONS FOR COMPARISON OF WEAKLY TYPED VALUES**
 
     // General purpose comparison function for weakly typed attribute values
     // Returns a pair where the second boolean value determines if the comparison was valid and safe
@@ -62,18 +66,39 @@ class DBMSImplementationForMarks {
     // Returns a pair of bools where the first is the result of the comparison and the second is its validity
     static bool equals(const AttributeValue &left, const AttributeValue &right);
 
-    // Implements hash join algorithm
-    // Smaller relation should be used as the buildSide
-    static const Relation *hashJoin(const Relation *probeSide, const Relation *buildSide);
+    // **SORTING FUNCTIONS
 
-    // TODO - add comments
+    // Mergesort helper function to merge two sorted sections of the relation
     static void merge(Relation *relation, size_t begin, size_t mid, size_t end);
 
-    // TODO - add comments
+    // Mergesort algorithm implementation
     static void mergeSort(Relation *relation, size_t begin, size_t end);
 
-    // Returns new sorted relation
+    // Sorts a relation
+    // Overwrites the input
     static void sort(Relation *relation);
+
+    // **HASHING HELPER FUNCTIONS**
+
+    // Checks if a given number is prime
+    static bool isPrime(size_t n);
+
+    // Function to return the smallest prime number greater than N
+    static size_t nextPrime(size_t N);
+
+    // Implement Modulo Division Hashing on Attribute Values
+    static size_t hash(const AttributeValue &value, size_t key);
+
+    // Implements Linear Probing for hash table
+    static size_t nextSlot(size_t slot, size_t hashTableSize);
+
+    // **MAIN QUERY FUNCTIONS**
+
+    // Builds a hash-index for the given relation
+    static std::pair<const Relation *, size_t> hashBuild(const Relation *buildSide);
+
+    // Implements hash join algorithm by probing the given hash table
+    static const Relation *hashProbe(const Relation *probeSide, const Relation *hashTable, size_t hashKey);
 
     // Implements sort-merge join algorithm
     // Assumes both relations are sorted and contain unique values
@@ -99,12 +124,15 @@ public:
         sort(large1);
         sort(large2);
 
-        // TODO - build hash table for small
+        // create indices to speed up query
+        auto[table, key] = hashBuild(small);
+        hashTable = table;
+        hashKey = key;
     }
 
     long runQuery(long threshold = 9) {
         const Relation *buffer1 = sortMergeJoin(large1, large2);
-        const Relation *buffer2 = hashJoin(buffer1, small);
+        const Relation *buffer2 = hashProbe(buffer1, hashTable, hashKey);
         const Relation *buffer3 = select(buffer2, threshold);
         long result = sumOfProduct(buffer3);
 
@@ -112,6 +140,9 @@ public:
         delete buffer1;
         delete buffer2;
         delete buffer3;
+
+        // delete indices
+        delete hashTable;
 
         // delete saved tables
         delete large1;

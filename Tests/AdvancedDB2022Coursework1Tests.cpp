@@ -17,24 +17,24 @@ TEMPLATE_TEST_CASE("Single Tuple", "", DBMSImplementationForMarks,
 
 TEMPLATE_TEST_CASE("Single Tuple String Join", "", DBMSImplementationForMarks,
                    DBMSImplementationForCompetition) {
-  TestType instance;
-  auto [a, b, c] = tuple{Relation{Tuple{"one", 20L, 3L}}, //
-                         Relation{Tuple{"one", 17L, 4L}}, //
-                         Relation{Tuple{"one", 29L, 5L}}};
-  instance.loadData(&a, &b, &c);
+    TestType instance;
+    auto[a, b, c] = tuple{Relation{Tuple{"one", 20L, 3L}}, //
+                          Relation{Tuple{"one", 17L, 4L}}, //
+                          Relation{Tuple{"one", 29L, 5L}}};
+    instance.loadData(&a, &b, &c);
 
-  REQUIRE(instance.runQuery() == 60);
+    REQUIRE(instance.runQuery() == 60);
 }
 
-TEMPLATE_TEST_CASE("Two Tuple String/Int Join", "", DBMSImplementationForMarks,
-                   DBMSImplementationForCompetition) {
-  TestType instance;
-  auto const [a, b, c] = tuple{Relation{Tuple{1L, 20L, 6L}, Tuple{"one", 20L, 3L}}, //
-                               Relation{Tuple{1L, 20L, 7L}, Tuple{"one", 17L, 4L}}, //
-                               Relation{Tuple{1L, 20L, 8L}, Tuple{"one", 29L, 5L}}};
-  instance.loadData(&a, &b, &c);
+TEMPLATE_TEST_CASE("Two Tuple String/Int Join", "", DBMSImplementationForCompetition,
+                   DBMSImplementationForMarks) {
+    TestType instance;
+    auto const[a, b, c] = tuple{Relation{Tuple{1L, 20L, 6L}, Tuple{"one", 20L, 3L}}, //
+                                Relation{Tuple{1L, 20L, 7L}, Tuple{"one", 17L, 4L}}, //
+                                Relation{Tuple{1L, 20L, 8L}, Tuple{"one", 29L, 5L}}};
+    instance.loadData(&a, &b, &c);
 
-  REQUIRE(instance.runQuery() == 396);
+    REQUIRE(instance.runQuery() == 396);
 }
 
 TEMPLATE_TEST_CASE("No matches when joining int and float", "", DBMSImplementationForMarks,

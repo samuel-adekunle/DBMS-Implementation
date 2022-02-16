@@ -1,5 +1,7 @@
 #include "AdvancedDB2022Coursework1.hpp"
 
+// **HELPER FUNCTIONS FOR COMPARISON OF WEAKLY TYPED VALUES**
+
 // General purpose comparison function for weakly typed attribute values
 // Returns a pair where the second boolean value determines if the comparison was valid and safe
 // The first value returns an int which is left - right for numerical types and strcmp for c-strings
@@ -50,86 +52,12 @@ bool DBMSImplementationForMarks::lessThan(const AttributeValue &left, const Attr
 // Returns a pair of bools where the first is the result of the comparison and the second is its validity
 bool DBMSImplementationForMarks::equals(const AttributeValue &left, const AttributeValue &right) {
     auto[value, valid] = comp(left, right);
-    return value == 0 && valid;
+    return (value == 0) && valid;
 }
 
-// **MAIN QUERY FUNCTIONS**
+// **SORTING FUNCTIONS
 
-// Implements hash join algorithm
-// Smaller relation should be used as the buildSide
-const Relation *DBMSImplementationForMarks::hashJoin(const Relation *const probeSide, const Relation *const buildSide) {
-    if (probeSide == nullptr || buildSide == nullptr) {
-        return nullptr;
-    } else {
-        const size_t hashTableSize = buildSide->size() * 2;
-        const long key = buildSide->size(); // TODO - find better way
-        auto *hashTable = new Relation(hashTableSize);
-        auto *result = new Relation();
-
-        auto hash = [&key](const AttributeValue &value) {
-            switch (getAttributeValueType(value)) {
-                case 0: {
-                    return size_t(getLongValue(value)) % key;
-                }
-                case 1: {
-                    return size_t(getdoubleValue(value)) % key;
-                }
-                case 2: {
-                    // assuming no nullptr
-                    return size_t(std::hash<const char *>{}(getStringValue(value))) % key;
-                }
-                default: {
-                    return (unsigned long) 0;
-                }
-            }
-        };
-
-        // linear probing
-        auto nextSlot = [&hashTableSize](const unsigned long slot) {
-            return (slot + 1) % hashTableSize;
-        };
-
-        // Build
-        for (const auto &buildTuple: *buildSide) {
-            const AttributeValue &buildValue = buildTuple.at(joinAttributeIndex);
-            if (buildValue.index() == 2 && getStringValue(buildValue) == nullptr)
-                continue;
-            unsigned long hashValue = hash(buildValue);
-            while (!hashTable->at(hashValue).empty()) {
-                hashValue = nextSlot(hashValue);
-            }
-            hashTable->at(hashValue) = buildTuple;
-        }
-
-        for (const auto &probeTuple: *probeSide) {
-            const AttributeValue &probeValue = probeTuple.at(joinAttributeIndex);
-            if (probeValue.index() == 2 && getStringValue(probeValue) == nullptr) { continue; }
-
-            unsigned long hashValue = hash(probeValue);
-
-            while (!hashTable->at(hashValue).empty()) {
-                while (!hashTable->at(hashValue).empty() &&
-                       !equals(hashTable->at(hashValue).at(joinAttributeIndex), probeValue)) {
-                    hashValue = nextSlot(hashValue);
-                }
-                const Tuple &buildTuple = hashTable->at(hashValue);
-                if (buildTuple.empty())
-                    continue;
-                if (equals(buildTuple.at(joinAttributeIndex), probeValue)) {
-                    Tuple combined;
-                    combined.reserve(buildTuple.size() + probeTuple.size());
-                    combined.insert(combined.begin(), probeTuple.begin(), probeTuple.end());
-                    combined.insert(combined.end(), buildTuple.begin(), buildTuple.end());
-                    result->push_back(combined);
-                }
-                hashValue = nextSlot(hashValue);
-            }
-        }
-        return result;
-    }
-}
-
-// TODO - add comments
+// Mergesort helper function to merge two sorted sections of the relation
 void DBMSImplementationForMarks::merge(Relation *relation, const size_t begin, const size_t mid, const size_t end) {
     size_t leftSize = mid - begin + 1, rightSize = end - mid;
     size_t leftIndex = 0, rightIndex = 0, relationIndex;
@@ -154,7 +82,7 @@ void DBMSImplementationForMarks::merge(Relation *relation, const size_t begin, c
     while (rightIndex < rightSize) { relation->at(relationIndex++) = rightSide.at(rightIndex++); }
 }
 
-// TODO - add comments
+// Mergesort algorithm implementation
 void DBMSImplementationForMarks::mergeSort(Relation *relation, const size_t begin, const size_t end) {
     if (begin < end) {
         size_t mid = (begin + end) / 2;
@@ -164,10 +92,133 @@ void DBMSImplementationForMarks::mergeSort(Relation *relation, const size_t begi
     }
 }
 
-// Sorts relation
+// Sorts a relation
+// Overwrites the input
 void DBMSImplementationForMarks::sort(Relation *relation) {
-    if (relation->size() < 2) { return; }
+    if (relation == nullptr || relation->size() < 2) { return; }
     mergeSort(relation, 0, relation->size() - 1);
+}
+
+// **HASHING FUNCTIONS
+
+// Checks if a given number is prime
+bool DBMSImplementationForMarks::isPrime(const size_t n) {
+    // Corner cases
+    if (n <= 1) return false;
+    if (n <= 3) return true;
+
+    // This is checked so that we can skip
+    // middle five numbers in below loop
+    if (n % 2 == 0 || n % 3 == 0) return false;
+
+    for (int i = 5; i * i <= n; i = i + 6)
+        if (n % i == 0 || n % (i + 2) == 0)
+            return false;
+
+    return true;
+}
+
+// Function to return the smallest prime number greater than N
+size_t DBMSImplementationForMarks::nextPrime(const size_t N) {
+    // Base case
+    if (N <= 1)
+        return 2;
+
+    size_t prime = N;
+    bool found = false;
+
+    // Loop continuously until isPrime returns
+    // true for a number greater than n
+    while (!found) {
+        prime++;
+
+        if (isPrime(prime))
+            found = true;
+    }
+
+    return prime;
+}
+
+// Implement Modulo Division Hashing on Attribute Values
+size_t DBMSImplementationForMarks::hash(const AttributeValue &value, const size_t key) {
+    switch (getAttributeValueType(value)) {
+        case 0: {
+            return getLongValue(value) % key;
+        }
+        case 1: {
+            return size_t(getdoubleValue(value)) % key;
+        }
+        case 2: {
+            auto stringVal = getStringValue(value);
+            if (stringVal == nullptr) return 0;
+            return std::hash<const char *>{}(getStringValue(value)) % key;
+        }
+        default: {
+            return 0;
+        }
+    }
+}
+
+// Implements Linear Probing for hash table
+size_t DBMSImplementationForMarks::nextSlot(const size_t slot, const size_t hashTableSize) {
+    return (slot + 1) % hashTableSize;
+}
+
+// **MAIN QUERY FUNCTIONS**
+
+// Builds a hash-index for the given relation
+std::pair<const Relation *, size_t> DBMSImplementationForMarks::hashBuild(const Relation *buildSide) {
+    if (buildSide == nullptr) { return nullptr; }
+    const size_t hashTableSize = buildSide->size() * 2;
+    const size_t key = nextPrime(buildSide->size());
+
+    auto *hashTable = new Relation(hashTableSize);
+
+    // Build
+    for (const auto &buildTuple: *buildSide) {
+        const AttributeValue &buildValue = buildTuple.at(joinAttributeIndex);
+        if (buildValue.index() == 2 && getStringValue(buildValue) == nullptr)
+            continue;
+        unsigned long hashValue = hash(buildValue, key);
+        while (!hashTable->at(hashValue).empty()) {
+            hashValue = nextSlot(hashValue, hashTableSize);
+        }
+        hashTable->at(hashValue) = buildTuple;
+    }
+
+    return {hashTable, hashKey};
+}
+
+// Implements hash join algorithm by probing the given hash table
+const Relation *DBMSImplementationForMarks::hashProbe(const Relation *probeSide, const Relation *hashTable,
+                                                      const size_t hashKey) {
+    auto *result = new Relation;
+    const size_t hashTableSize = hashTable->size();
+    for (const auto &probeTuple: *probeSide) {
+        const AttributeValue &probeValue = probeTuple.at(joinAttributeIndex);
+        if (probeValue.index() == 2 && getStringValue(probeValue) == nullptr) { continue; }
+
+        unsigned long hashValue = hash(probeValue, hashKey);
+
+        while (!hashTable->at(hashValue).empty()) {
+            while (!hashTable->at(hashValue).empty() &&
+                   !equals(hashTable->at(hashValue).at(joinAttributeIndex), probeValue)) {
+                hashValue = nextSlot(hashValue, hashTableSize);
+            }
+            const Tuple &buildTuple = hashTable->at(hashValue);
+            if (buildTuple.empty())
+                continue;
+            if (equals(buildTuple.at(joinAttributeIndex), probeValue)) {
+                Tuple combined;
+                combined.reserve(buildTuple.size() + probeTuple.size());
+                combined.insert(combined.begin(), probeTuple.begin(), probeTuple.end());
+                combined.insert(combined.end(), buildTuple.begin(), buildTuple.end());
+                result->push_back(combined);
+            }
+            hashValue = nextSlot(hashValue, hashTableSize);
+        }
+    }
+    return result;
 }
 
 // Implements sort-merge join algorithm
@@ -175,7 +226,7 @@ void DBMSImplementationForMarks::sort(Relation *relation) {
 const Relation *DBMSImplementationForMarks::sortMergeJoin(const Relation *leftSide,
                                                           const Relation *rightSide) {
     if (leftSide == nullptr || rightSide == nullptr) { return nullptr; }
-    auto *result = new Relation; // buffer deleted by runQuery function
+    auto *result = new Relation;
     size_t leftIndex = 0, rightIndex = 0;
     while (leftIndex < leftSide->size() && rightIndex < rightSide->size()) {
         const Tuple &leftTuple = leftSide->at(leftIndex);
